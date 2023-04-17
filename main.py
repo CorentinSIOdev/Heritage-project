@@ -39,7 +39,7 @@ while running:
     pygame.display.flip()
 
     # Timer management last frame
-    config.clock.tick(Config.FPS)
+    config.clock.tick(config.FPS)
 
 # Fermeture de Pygame
 pygame.quit()
