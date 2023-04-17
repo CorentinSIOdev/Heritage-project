@@ -32,11 +32,13 @@ while running:
     # ...
 
     # Screen management
-    config.setScreen.fill((255, 255, 255))
+    if loading_screen.progess_load_finish == True:
+        config.setScreen.fill((255, 255, 255))
+
     # ...
 
     # Screen update
-    pygame.display.flip()
+    pygame.display.update()
 
     # Timer management last frame
     config.clock.tick(config.FPS)
