@@ -4,28 +4,39 @@ import random
 
 class LoadingScreen:
     def __init__(self):
+        # Pygame Configuration
         pygame.init()
+
+        # Screen Configuration
         self.config = config = Config()
         self.screen = config.getScreen()
         self.width, self.height = config.SCREEN_WIDTH, config.SCREEN_HEIGHT
         self.clock, self.logo = config.clock, config.logo
-        self.background, self.fps = config.BLACK, config.FPS
+        self.fps = config.FPS
         
         # Progress bar configuration
-        self.progress_bar_length, self.progress_bar_thickness = 400, 20
-        self.progress_bar_color_start = pygame.Color('#0062FF')
-        self.progress_bar_color_end = pygame.Color('#FF6600')
+        self.progress_bar_length, self.progress_bar_thickness = 250, 10
         self.progress_bar_position = (self.width/2 - self.progress_bar_length/2, self.height - 150)
         self.progress = 0
         self.progress_load_finish = False
         self.time_since_last_pause = 0
         self.pause_duration = 0
         self.paused = False
-        self.progress_bar_text = config.FONT_SMALL.render("Progression : {:.0%}".format(self.progress), True, config.WHITE, self.background)
+        self.border_color = config.WHITE
+        self.border_radius = 5
+        self.progress_bar_radius = 2
+        self.border_width = 2
+        self.progress_color_start = pygame.Color("#32374d")
+        self.progress_color_end = pygame.Color("#c35e26")
+
+        # Background configuration
+        self.background_gif = pygame.image.load("assets/images/background_loading/background.gif")
+        self.background = pygame.transform.scale(self.background_gif, (self.width, self.height))
+
 
     def show(self):
         start_screen = True
-        progress_speed = 1/3  # 1/3 progress per second
+        progress_speed = 1/5  # 1/5 progress per second
         while start_screen:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -48,12 +59,17 @@ class LoadingScreen:
                     self.time_since_last_pause = 0
 
             # Update progress bar text
-            self.progress_bar_text = self.config.FONT_SMALL.render("Progression : {:.0%}".format(self.progress), True, self.config.WHITE)
+            if self.progress <= 0.0:
+                self.progress_bar_text = self.config.FONT_SMALL.render("Début de la mise à jour", True, self.config.WHITE)
+            elif self.progress_load_finish:
+                self.progress_bar_text = self.config.FONT_SMALL.render("Mise à jour terminée !", True, self.config.WHITE)
+            else:
+                self.progress_bar_text = self.config.FONT_SMALL.render("Mise à jour : {:.0%}".format(self.progress), True, self.config.WHITE)
 
-            # Screen management
-            self.screen.fill(self.background)
+            # Get background image
+            self.screen.blit(self.background, (0, 0))
 
-            # get the size of the screen
+            # Get the size of the screen
             screen_width, screen_height = self.screen.get_size()
 
             # Scale the logo to fit the screen
@@ -67,13 +83,27 @@ class LoadingScreen:
             self.screen.blit(scaled_logo, logo_rect)
 
             # Draw the progress bar
-            progress_bar_rect_bg = pygame.Rect(self.progress_bar_position[0], self.progress_bar_position[1], 
-                                            self.progress_bar_length, self.progress_bar_thickness)
-            pygame.draw.rect(self.screen, self.background, progress_bar_rect_bg)
+            border_rect = pygame.Rect(self.progress_bar_position[0]-self.border_width, self.progress_bar_position[1]-self.border_width, 
+                                        self.progress_bar_length+2*self.border_width, self.progress_bar_thickness+2*self.border_width)
+            pygame.draw.rect(self.screen, self.border_color, border_rect, border_radius=self.border_radius, width=0)
+            pygame.draw.rect(self.screen, self.border_color, pygame.Rect(self.progress_bar_position[0], self.progress_bar_position[1], 
+                                        self.progress_bar_length, self.progress_bar_thickness))
+
+
+
+            # Calculer la position et la taille de la barre de progression
             progress_bar_rect = pygame.Rect(self.progress_bar_position[0], self.progress_bar_position[1], 
                                             self.progress_bar_length*self.progress, self.progress_bar_thickness)
-            mix_color = self.progress_bar_color_start.lerp(self.progress_bar_color_end, self.progress)
-            pygame.draw.line(self.screen, mix_color, progress_bar_rect.topleft, progress_bar_rect.topright, self.progress_bar_thickness)
+
+            # Dessiner la barre de progression avec les deux couleurs vives
+            if self.progress_load_finish:
+                progress_color = self.progress_color_end
+            else:
+                progress_color = ((1 - self.progress) * self.progress_color_start[0] + self.progress * self.progress_color_end[0],
+                                (1 - self.progress) * self.progress_color_start[1] + self.progress * self.progress_color_end[1],
+                                (1 - self.progress) * self.progress_color_start[2] + self.progress * self.progress_color_end[2])
+            pygame.draw.rect(self.screen, progress_color, progress_bar_rect, border_radius=self.progress_bar_radius, width=0)
+
 
             # Draw the progress text
             progress_text_rect = self.progress_bar_text.get_rect(center=(screen_width/2, screen_height - 100))
@@ -86,3 +116,4 @@ class LoadingScreen:
                     self.pause_duration = random.uniform(0.5, 1.5)  # pause for a random duration between 0.5 and 1.5 seconds
 
             pygame.display.flip()
+
